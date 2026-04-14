@@ -2,242 +2,152 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>오늘의 점심 뽑기</title>
+<title>🍱 점심 메뉴 돌림판</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f5f5f5; display: flex; justify-content: center; align-items: flex-start;
-  min-height: 100vh; padding: 2rem 1rem; }
-.container { background: #fff; border-radius: 20px; padding: 2rem 1.5rem;
-  max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
-h1 { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 4px; color: #1a1a1a; }
-.sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 1.5rem; }
+body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+}
 
-.roulette-wrap { position: relative; width: 260px; height: 260px; margin: 0 auto 1.5rem; }
-canvas { width: 260px; height: 260px; border-radius: 50%; display: block; }
-.pointer { position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
-  width: 0; height: 0; border-left: 10px solid transparent;
-  border-right: 10px solid transparent; border-top: 22px solid #333; z-index: 10; }
-.center-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-  width: 60px; height: 60px; border-radius: 50%; background: #fff;
-  border: 3px solid #ddd; cursor: pointer; font-size: 24px;
-  display: flex; align-items: center; justify-content: center; z-index: 10;
-  transition: transform 0.1s, box-shadow 0.1s; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.center-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-.center-btn:active { transform: translate(-50%,-50%) scale(0.92); }
+canvas {
+    margin-top: 20px;
+}
 
-.result-card { background: #f8f8f8; border-radius: 16px; padding: 1.25rem;
-  text-align: center; margin-bottom: 1.25rem; min-height: 90px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  transition: background 0.3s; }
-.result-label { font-size: 12px; color: #999; }
-.result-menu { font-size: 28px; font-weight: 700; color: #1a1a1a; }
-.result-cat { font-size: 12px; color: #aaa; margin-top: 2px; }
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
 
-.alt-title { font-size: 13px; color: #888; margin-bottom: 8px; }
-.alt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
-.alt-item { background: #f8f8f8; border-radius: 10px; padding: 10px;
-  font-size: 14px; color: #333; text-align: center; font-weight: 500; }
+#result {
+    font-size: 22px;
+    margin-top: 20px;
+    font-weight: bold;
+}
 
-.btn-row { display: flex; gap: 8px; }
-.btn { flex: 1; padding: 12px; border: 1.5px solid #ddd; border-radius: 12px;
-  background: transparent; cursor: pointer; font-size: 14px; font-weight: 600;
-  color: #333; transition: all 0.15s; }
-.btn:hover { background: #f5f5f5; }
-.btn:active { transform: scale(0.97); }
-.btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-.btn.primary:hover { background: #333; }
-
-.confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 999; }
+.vote-box {
+    margin-top: 20px;
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>🎰 오늘의 점심 뽑기</h1>
-  <p class="sub">가운데 버튼을 눌러 룰렛을 돌려보세요!</p>
 
-  <div class="roulette-wrap">
-    <div class="pointer"></div>
-    <canvas id="wheel" width="520" height="520"></canvas>
-    <div class="center-btn" id="spinBtn" onclick="spin()">▶</div>
-  </div>
+<h1>🍱 점심 메뉴 돌림판</h1>
 
-  <div class="result-card" id="resultCard">
-    <p class="result-label">결과가 여기에 표시됩니다</p>
-    <p class="result-menu" id="resultMenu">?</p>
-    <p class="result-cat" id="resultCat"></p>
-  </div>
+<canvas id="wheel" width="500" height="500"></canvas>
 
-  <p class="alt-title">🤔 다른 선택지</p>
-  <div class="alt-grid" id="altGrid">
-    <div class="alt-item">-</div>
-    <div class="alt-item">-</div>
-    <div class="alt-item">-</div>
-    <div class="alt-item">-</div>
-  </div>
+<br>
+<button onclick="spin()">🎯 돌리기</button>
 
-  <div class="btn-row">
-    <button class="btn" onclick="spin()">🔄 다시 뽑기</button>
-    <button class="btn primary" onclick="decide()">✅ 이걸로 결정!</button>
-  </div>
-</div>
+<div id="result"></div>
 
-<canvas class="confetti" id="confetti"></canvas>
+<hr>
+
+<h2>🗳 팀원 투표</h2>
+<div class="vote-box" id="voteBox"></div>
 
 <script>
-const MENUS = [
-  "김치찌개","된장찌개","순두부찌개","부대찌개","삼겹살","제육볶음","닭갈비","불고기","비빔밥","국밥","냉면","보쌈","족발","삼계탕","갈비탕","쌈밥","곱창",
-  "짜장면","짬뽕","볶음밥","탕수육","마라탕","마라샹궈","양꼬치","딤섬","깐풍기","훠궈",
-  "초밥","라멘","우동","돈카츠","규동","오야코동","텐동","소바","야키토리","타코야키",
-  "파스타","피자","스테이크","햄버거","샌드위치","샐러드","리조또","그라탱",
-  "쌀국수","팟타이","커리","케밥","떡볶이","쭈꾸미볶음","분식","초계국수","물냉면",
+const menus = [
+    "김치찌개",
+    "제육볶음",
+    "돈까스",
+    "짜장면",
+    "짬뽕",
+    "초밥",
+    "햄버거",
+    "쌀국수",
+    "부대찌개",
+    "마라탕"
 ];
 
-const COLORS = [
-  ["#C0392B","#E74C3C"],
-  ["#E67E22","#F39C12"],
-  ["#27AE60","#2ECC71"],
-  ["#2980B9","#3498DB"],
-  ["#8E44AD","#9B59B6"]
-];
+let votes = {};
+menus.forEach(menu => votes[menu] = 0);
 
-const segments = Object.keys(MENUS);
-const all = Object.entries(MENUS).flatMap(([cat,items]) => items.map(m => ({cat,m})));
-let angle = 0, spinning = false, currentResult = null;
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const radius = canvas.width / 2;
+const colors = ["#FF6384","#36A2EB","#FFCE56","#8BC34A","#FF9800","#9C27B0","#00BCD4","#E91E63","#4CAF50","#795548"];
 
-const canvas = document.getElementById('wheel');
-const ctx = canvas.getContext('2d');
-const cx = 260, cy = 260, r = 252;
+let startAngle = 0;
 
-function drawWheel(rot) {
-  ctx.clearRect(0, 0, 520, 520);
-  const n = segments.length;
-  const arc = (2 * Math.PI) / n;
-  segments.forEach((cat, i) => {
-    const start = rot + i * arc - Math.PI / 2;
-    const end = start + arc;
-    const colors = COLORS[i % COLORS.length];
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = i % 2 === 0 ? colors[0] : colors[1];
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
-    ctx.stroke();
+function drawWheel() {
+    const arc = 2 * Math.PI / menus.length;
+    for (let i = 0; i < menus.length; i++) {
+        const angle = startAngle + i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, angle, angle + arc);
+        ctx.lineTo(radius, radius);
+        ctx.fill();
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(start + arc / 2);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 4;
-    ctx.fillText(cat, r - 16, 7);
-    ctx.restore();
-  });
-  ctx.beginPath();
-  ctx.arc(cx, cy, 36, 0, 2 * Math.PI);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.strokeStyle = '#ddd';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+        ctx.save();
+        ctx.fillStyle = "white";
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.font = "16px Arial";
+        ctx.fillText(menus[i], radius - 10, 10);
+        ctx.restore();
+    }
 }
 
-drawWheel(0);
+drawWheel();
+
+let spinning = false;
 
 function spin() {
-  if (spinning) return;
-  spinning = true;
-  const btn = document.getElementById('spinBtn');
-  btn.textContent = '...';
-  btn.style.cursor = 'not-allowed';
+    if (spinning) return;
+    spinning = true;
 
-  const extra = 6 + Math.random() * 6;
-  const targetAngle = angle + extra * Math.PI * 2 + Math.random() * Math.PI * 2;
-  const duration = 3500 + Math.random() * 1000;
-  const start = performance.now();
-  const startAngle = angle;
+    let spinAngle = Math.random() * 2000 + 2000;
+    let spinTime = 0;
+    let spinTimeTotal = 3000;
 
-  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
-
-  function frame(now) {
-    const t = Math.min((now - start) / duration, 1);
-    const cur = startAngle + (targetAngle - startAngle) * easeOut(t);
-    drawWheel(cur);
-    if (t < 1) {
-      requestAnimationFrame(frame);
-    } else {
-      angle = targetAngle % (2 * Math.PI);
-      spinning = false;
-      btn.textContent = '▶';
-      btn.style.cursor = 'pointer';
-      showResult(angle);
+    function rotateWheel() {
+        spinTime += 30;
+        if (spinTime >= spinTimeTotal) {
+            stopRotateWheel();
+            return;
+        }
+        const spinAngleIncrement = spinAngle * (1 - spinTime / spinTimeTotal);
+        startAngle += spinAngleIncrement * Math.PI / 180;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawWheel();
+        requestAnimationFrame(rotateWheel);
     }
-  }
-  requestAnimationFrame(frame);
+
+    rotateWheel();
 }
 
-function showResult(finalAngle) {
-  const n = segments.length;
-  const arc = (2 * Math.PI) / n;
-  const normalized = ((-finalAngle + Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  const idx = Math.floor(normalized / arc) % n;
-  const cat = segments[idx];
-  const items = MENUS[cat];
-  const menu = items[Math.floor(Math.random() * items.length)];
-  currentResult = { cat, menu };
-
-  document.querySelector('.result-label').textContent = '오늘의 추천 메뉴';
-  document.getElementById('resultMenu').textContent = menu;
-  document.getElementById('resultCat').textContent = cat + ' 카테고리';
-  document.getElementById('resultCard').style.background = '#fff8f0';
-
-  const alts = all.filter(x => x.m !== menu).sort(() => Math.random() - 0.5).slice(0, 4);
-  document.getElementById('altGrid').innerHTML = alts.map(x =>
-    `<div class="alt-item">${x.m}</div>`).join('');
+function stopRotateWheel() {
+    const arc = 2 * Math.PI / menus.length;
+    const degrees = startAngle * 180 / Math.PI + 90;
+    const arcd = arc * 180 / Math.PI;
+    const index = Math.floor((360 - degrees % 360) / arcd);
+    document.getElementById("result").innerText = 
+        "🎉 오늘의 점심: " + menus[index];
+    spinning = false;
 }
 
-function decide() {
-  if (!currentResult) { spin(); return; }
-  launchConfetti();
-  setTimeout(() => alert(`🎉 오늘 점심은 "${currentResult.menu}"로 결정!\n맛있게 드세요!`), 100);
-}
+// -----------------
+// 🗳 투표 기능
+// -----------------
 
-function launchConfetti() {
-  const cc = document.getElementById('confetti');
-  const c = cc.getContext('2d');
-  cc.width = window.innerWidth;
-  cc.height = window.innerHeight;
-  const pieces = Array.from({length: 80}, () => ({
-    x: Math.random() * cc.width, y: -20,
-    r: 4 + Math.random() * 6,
-    color: ['#E74C3C','#F39C12','#2ECC71','#3498DB','#9B59B6'][Math.floor(Math.random()*5)],
-    vx: (Math.random() - 0.5) * 4, vy: 3 + Math.random() * 4,
-    rot: Math.random() * 360, vr: (Math.random()-0.5)*10
-  }));
-  let frame = 0;
-  function draw() {
-    c.clearRect(0, 0, cc.width, cc.height);
-    pieces.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-      c.save();
-      c.translate(p.x, p.y);
-      c.rotate(p.rot * Math.PI/180);
-      c.fillStyle = p.color;
-      c.fillRect(-p.r, -p.r/2, p.r*2, p.r);
-      c.restore();
-    });
-    if (++frame < 80) requestAnimationFrame(draw);
-    else c.clearRect(0,0,cc.width,cc.height);
-  }
-  draw();
-}
+const voteBox = document.getElementById("voteBox");
+
+menus.forEach(menu => {
+    const btn = document.createElement("button");
+    btn.innerText = menu + " (0)";
+    btn.onclick = () => {
+        votes[menu]++;
+        btn.innerText = menu + " (" + votes[menu] + ")";
+    };
+    voteBox.appendChild(btn);
+});
 </script>
+
 </body>
 </html>
