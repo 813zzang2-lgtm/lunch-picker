@@ -5,109 +5,98 @@
 <title>점심 룰렛</title>
 <style>
 body {
-  text-align:center;
-  font-family: Arial, sans-serif;
-  background:#f7f7f7;
+    text-align: center;
+    font-family: sans-serif;
+    background: #f4f4f4;
 }
 canvas {
-  margin-top:30px;
+    margin-top: 30px;
 }
 button {
-  margin-top:20px;
-  padding:15px 30px;
-  font-size:18px;
-  border:none;
-  background:#ff6b6b;
-  color:white;
-  border-radius:8px;
-  cursor:pointer;
-}
-button:hover {
-  opacity:0.8;
+    margin-top: 20px;
+    padding: 12px 24px;
+    font-size: 18px;
+    cursor: pointer;
 }
 </style>
 </head>
 <body>
 
-<h1>🍽 점심 메뉴 룰렛</h1>
-<canvas id="wheel" width="500" height="500"></canvas>
+<h1>🍽 점심 룰렛</h1>
+
+<canvas id="wheel" width="400" height="400"></canvas>
 <br>
-<button onclick="spin()">돌리기 🎰</button>
+<button onclick="spin()">🎰 돌리기</button>
 
 <script>
 const menus = [
 "김치찌개","된장찌개","순두부찌개","부대찌개",
 "삼겹살","제육볶음","닭갈비","불고기",
-"비빔밥","돌솥비빔밥","국밥","설렁탕",
-"갈비탕","삼계탕","냉면","막국수",
-"쌈밥","보쌈","족발","곱창",
-"짜장면","짬뽕","볶음밥","탕수육",
-"마라탕","양꼬치","딤섬",
-"초밥","라멘","우동","돈카츠",
-"규동","텐동",
-"파스타","피자","스테이크","햄버거",
-"샌드위치","리조또",
-"쌀국수","팟타이","커리",
-"떡볶이","김밥","분식"
+"비빔밥","국밥","설렁탕","갈비탕",
+"짜장면","짬뽕","마라탕","초밥",
+"라멘","돈카츠","파스타","피자",
+"쌀국수","팟타이","떡볶이","김밥"
 ];
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
-const radius = canvas.width/2;
-let angle = 0;
-let spinning = false;
 
-function drawWheel(){
-  const arc = 2*Math.PI/menus.length;
-  for(let i=0;i<menus.length;i++){
-    const start = i*arc;
-    ctx.beginPath();
-    ctx.fillStyle = i%2===0 ? "#FFD93D" : "#6BCB77";
-    ctx.moveTo(radius,radius);
-    ctx.arc(radius,radius,radius,start,start+arc);
-    ctx.fill();
+const radius = 200;
+const center = 200;
+let startAngle = 0;
 
-    ctx.save();
-    ctx.translate(radius,radius);
-    ctx.rotate(start+arc/2);
-    ctx.fillStyle="black";
-    ctx.font="14px Arial";
-    ctx.fillText(menus[i],radius/2,5);
-    ctx.restore();
-  }
+function drawWheel() {
+    const arc = Math.PI * 2 / menus.length;
+
+    for (let i = 0; i < menus.length; i++) {
+        const angle = startAngle + i * arc;
+
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(center, center, radius, angle, angle + arc);
+        ctx.fillStyle = i % 2 === 0 ? "#FFB6C1" : "#87CEFA";
+        ctx.fill();
+        ctx.save();
+
+        ctx.translate(center, center);
+        ctx.rotate(angle + arc / 2);
+        ctx.fillStyle = "#000";
+        ctx.font = "14px Arial";
+        ctx.fillText(menus[i], 80, 5);
+        ctx.restore();
+    }
 }
 
-function spin(){
-  if(spinning) return;
-  spinning = true;
+function spin() {
+    const spinAngle = Math.random() * 360 + 720;
+    const spinTime = 4000;
+    const start = performance.now();
 
-  const spinAngle = Math.random()*2000 + 2000;
-  const duration = 3000;
-  const start = Date.now();
+    function animate(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / spinTime, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
 
-  function animate(){
-    const now = Date.now();
-    const progress = (now-start)/duration;
-    if(progress<1){
-      angle = spinAngle*progress;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.save();
-      ctx.translate(radius,radius);
-      ctx.rotate(angle*Math.PI/180);
-      ctx.translate(-radius,-radius);
-      drawWheel();
-      ctx.restore();
-      requestAnimationFrame(animate);
-    }else{
-      spinning = false;
-      const arc = 360/menus.length;
-      const deg = angle%360;
-      const index = Math.floor((360-deg)/arc)%menus.length;
-      alert("🎉 오늘의 메뉴: "+menus[index]);
+        startAngle = (spinAngle * easeOut) * Math.PI / 180;
+
+        ctx.clearRect(0, 0, 400, 400);
+        drawWheel();
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            alert("오늘의 메뉴는 👉 " + getResult());
+        }
     }
-  }
 
-  animate();
+    requestAnimationFrame(animate);
+}
+
+function getResult() {
+    const degrees = startAngle * 180 / Math.PI;
+    const arc = 360 / menus.length;
+    const index = Math.floor((360 - (degrees % 360)) / arc) % menus.length;
+    return menus[index];
 }
 
 drawWheel();
