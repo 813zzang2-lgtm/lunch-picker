@@ -5,26 +5,25 @@
 <title>점심 룰렛</title>
 <style>
 body {
-    text-align: center;
-    font-family: sans-serif;
-    background: #f4f4f4;
+  text-align:center;
+  font-family:sans-serif;
+  background:#f4f4f4;
 }
-canvas {
-    margin-top: 30px;
+canvas{
+  margin-top:30px;
+  background:white;
 }
-button {
-    margin-top: 20px;
-    padding: 12px 24px;
-    font-size: 18px;
-    cursor: pointer;
+button{
+  margin-top:20px;
+  padding:10px 20px;
+  font-size:18px;
 }
 </style>
 </head>
 <body>
 
 <h1>🍽 점심 룰렛</h1>
-
-<canvas id="wheel" width="400" height="420"></canvas>
+<canvas id="wheel" width="400" height="400"></canvas>
 <br>
 <button onclick="spin()">🎰 돌리기</button>
 
@@ -34,84 +33,76 @@ const menus = [
 "삼겹살","제육볶음","닭갈비","불고기",
 "비빔밥","국밥","설렁탕","갈비탕",
 "짜장면","짬뽕","마라탕","초밥",
-"라멘","돈카츠","파스타","피자",
-"쌀국수","팟타이","떡볶이","김밥"
+"라멘","돈카츠","파스타","피자"
 ];
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 
+const center = 200;
 const radius = 180;
-const centerX = 200;
-const centerY = 220;
-let startAngle = 0;
+let angle = 0;
 
-function drawWheel() {
-    const arc = Math.PI * 2 / menus.length;
+function draw(){
+  ctx.clearRect(0,0,400,400);
 
-    for (let i = 0; i < menus.length; i++) {
-        const angle = startAngle + i * arc;
+  const arc = 2*Math.PI/menus.length;
 
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, angle, angle + arc);
-        ctx.fillStyle = i % 2 === 0 ? "#FFB6C1" : "#87CEFA";
-        ctx.fill();
-        ctx.save();
-
-        ctx.translate(centerX, centerY);
-        ctx.rotate(angle + arc / 2);
-        ctx.fillStyle = "#000";
-        ctx.font = "14px Arial";
-        ctx.fillText(menus[i], 70, 5);
-        ctx.restore();
-    }
-
-    drawPointer();
-}
-
-function drawPointer() {
+  for(let i=0;i<menus.length;i++){
     ctx.beginPath();
-    ctx.moveTo(centerX - 15, 20);
-    ctx.lineTo(centerX + 15, 20);
-    ctx.lineTo(centerX, 50);
-    ctx.fillStyle = "red";
+    ctx.moveTo(center,center);
+    ctx.arc(center,center,radius,angle+i*arc,angle+(i+1)*arc);
+    ctx.fillStyle = i%2==0 ? "#FFD580" : "#87CEFA";
     ctx.fill();
+    ctx.save();
+    ctx.translate(center,center);
+    ctx.rotate(angle+(i+0.5)*arc);
+    ctx.fillStyle="black";
+    ctx.font="14px Arial";
+    ctx.fillText(menus[i],70,0);
+    ctx.restore();
+  }
+
+  // 🔺 화살표
+  ctx.beginPath();
+  ctx.moveTo(center-15,10);
+  ctx.lineTo(center+15,10);
+  ctx.lineTo(center,40);
+  ctx.fillStyle="red";
+  ctx.fill();
 }
 
-function spin() {
-    const spinAngle = Math.random() * 360 + 720;
-    const spinTime = 4000;
-    const start = performance.now();
+function spin(){
+  let spinAngle = Math.random()*360+720;
+  let duration = 3000;
+  let start = null;
 
-    function animate(now) {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / spinTime, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
+  function animate(timestamp){
+    if(!start) start = timestamp;
+    let progress = timestamp-start;
+    let percent = Math.min(progress/duration,1);
+    let ease = 1-Math.pow(1-percent,3);
 
-        startAngle = (spinAngle * easeOut) * Math.PI / 180;
+    angle = (spinAngle*ease)*Math.PI/180;
+    draw();
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawWheel();
-
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            alert("오늘의 메뉴는 👉 " + getResult());
-        }
+    if(percent<1){
+      requestAnimationFrame(animate);
+    }else{
+      alert("오늘의 메뉴 👉 "+getResult());
     }
-
-    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
 }
 
-function getResult() {
-    const degrees = startAngle * 180 / Math.PI;
-    const arc = 360 / menus.length;
-    const index = Math.floor((360 - (degrees % 360)) / arc) % menus.length;
-    return menus[index];
+function getResult(){
+  let degrees = angle*180/Math.PI;
+  let arc = 360/menus.length;
+  let index = Math.floor((360-(degrees%360))/arc)%menus.length;
+  return menus[index];
 }
 
-drawWheel();
+draw();
 </script>
 
 </body>
