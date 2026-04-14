@@ -5,24 +5,26 @@
 <title>점심 룰렛</title>
 <style>
 body {
-  text-align:center;
-  font-family:sans-serif;
-  background:#f4f4f4;
+  text-align: center;
+  font-family: sans-serif;
+  background: #f4f4f4;
 }
-canvas{
-  margin-top:30px;
-  background:white;
+canvas {
+  margin-top: 30px;
+  background: white;
 }
-button{
-  margin-top:20px;
-  padding:10px 20px;
-  font-size:18px;
+button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  font-size: 18px;
+  cursor: pointer;
 }
 </style>
 </head>
 <body>
 
 <h1>🍽 점심 룰렛</h1>
+
 <canvas id="wheel" width="400" height="400"></canvas>
 <br>
 <button onclick="spin()">🎰 돌리기</button>
@@ -43,66 +45,86 @@ const center = 200;
 const radius = 180;
 let angle = 0;
 
-function draw(){
-  ctx.clearRect(0,0,400,400);
+function drawWheel() {
+  ctx.clearRect(0, 0, 400, 400);
 
-  const arc = 2*Math.PI/menus.length;
+  const arc = 2 * Math.PI / menus.length;
 
-  for(let i=0;i<menus.length;i++){
+  for (let i = 0; i < menus.length; i++) {
+    const start = angle + i * arc;
+    const end = start + arc;
+
     ctx.beginPath();
-    ctx.moveTo(center,center);
-    ctx.arc(center,center,radius,angle+i*arc,angle+(i+1)*arc);
-    ctx.fillStyle = i%2==0 ? "#FFD580" : "#87CEFA";
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, start, end);
+    ctx.fillStyle = i % 2 === 0 ? "#FFD580" : "#87CEFA";
     ctx.fill();
+
+    // 텍스트
     ctx.save();
-    ctx.translate(center,center);
-    ctx.rotate(angle+(i+0.5)*arc);
-    ctx.fillStyle="black";
-    ctx.font="14px Arial";
-    ctx.fillText(menus[i],70,0);
+    ctx.translate(center, center);
+    ctx.rotate(start + arc / 2);
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "right";
+    ctx.fillText(menus[i], radius - 10, 5);
     ctx.restore();
   }
 
-  // 🔺 화살표
+  drawPointer();
+}
+
+function drawPointer() {
   ctx.beginPath();
-  ctx.moveTo(center-15,10);
-  ctx.lineTo(center+15,10);
-  ctx.lineTo(center,40);
-  ctx.fillStyle="red";
+  ctx.moveTo(center - 15, 10);
+  ctx.lineTo(center + 15, 10);
+  ctx.lineTo(center, 40);
+  ctx.fillStyle = "red";
   ctx.fill();
 }
 
-function spin(){
-  let spinAngle = Math.random()*360+720;
-  let duration = 3000;
-  let start = null;
+function spin() {
+  const spinAngle = Math.random() * 360 + 720;
+  const duration = 4000;
+  let startTime = null;
 
-  function animate(timestamp){
-    if(!start) start = timestamp;
-    let progress = timestamp-start;
-    let percent = Math.min(progress/duration,1);
-    let ease = 1-Math.pow(1-percent,3);
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
 
-    angle = (spinAngle*ease)*Math.PI/180;
-    draw();
+    const progress = timestamp - startTime;
+    const percent = Math.min(progress / duration, 1);
+    const easeOut = 1 - Math.pow(1 - percent, 3);
 
-    if(percent<1){
+    angle = (spinAngle * easeOut) * Math.PI / 180;
+    drawWheel();
+
+    if (percent < 1) {
       requestAnimationFrame(animate);
-    }else{
-      alert("오늘의 메뉴 👉 "+getResult());
+    } else {
+      const result = getResult();
+      setTimeout(() => {
+        alert("오늘의 메뉴 👉 " + result);
+      }, 200);
     }
   }
+
   requestAnimationFrame(animate);
 }
 
-function getResult(){
-  let degrees = angle*180/Math.PI;
-  let arc = 360/menus.length;
-  let index = Math.floor((360-(degrees%360))/arc)%menus.length;
-  return menus[index];
+function getResult() {
+  const arc = 2 * Math.PI / menus.length;
+
+  // 화살표는 12시 방향 → -90도 보정
+  let adjusted = angle - Math.PI / 2;
+
+  adjusted = (adjusted % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+
+  const index = Math.floor(adjusted / arc);
+
+  return menus[(menus.length - index) % menus.length];
 }
 
-draw();
+drawWheel();
 </script>
 
 </body>
