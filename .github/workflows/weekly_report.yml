@@ -1,0 +1,27 @@
+name: 두레이 주간보고 태스크 자동 생성
+
+on:
+  schedule:
+    - cron: '0 5 * * 3'
+  workflow_dispatch:
+
+jobs:
+  create-weekly-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v3
+
+      - name: Python 설치
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: requests 설치
+        run: pip install requests
+
+      - name: 주간보고 태스크 생성
+        env:
+          DOORAY_API_TOKEN: ${{ secrets.DOORAY_API_TOKEN }}
+        run: python dooray_weekly_report.py
